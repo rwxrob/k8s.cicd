@@ -1,0 +1,10 @@
+FROM quay.io/kubespray/kubespray:v2.24.1
+
+LABEL org.opencontainers.image.source https://github.com/rwxrob/k8s.cicd
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  apt-get update -q && \
+  apt-get install -yq --no-install-recommends \
+  dnsutils
+
+# TODO: gradually add that stuff necessary to pull down the k8sapps
