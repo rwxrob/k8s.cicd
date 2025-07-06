@@ -1,13 +1,12 @@
 ---
+# cilium_version: "v1.12.1"
+
 # Log-level
 # cilium_debug: false
 
 # cilium_mtu: ""
 # cilium_enable_ipv4: true
 # cilium_enable_ipv6: false
-
-# Enable l2 announcement from cilium to replace Metallb Ref: https://docs.cilium.io/en/v1.14/network/l2-announcements/
-cilium_l2announcements: false
 
 # Cilium agent health port
 # cilium_agent_health_port: "9879"
@@ -41,10 +40,6 @@ cilium_l2announcements: false
 
 # Overlay Network Mode
 # cilium_tunnel_mode: vxlan
-
-# LoadBalancer Mode (snat/dsr/hybrid) Ref: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/#dsr-mode
-# cilium_loadbalancer_mode: snat
-
 # Optional features
 # cilium_enable_prometheus: false
 # Enable if you want to make use of hostPort mappings
@@ -70,7 +65,7 @@ cilium_l2announcements: false
 # `cilium_enable_legacy_services` is deprecated in 1.6, removed in 1.9
 # cilium_enable_legacy_services: false
 
-# Unique ID of the cluster. Must be unique across all connected clusters and
+# Unique ID of the cluster. Must be unique across all conneted clusters and
 # in the range of 1 and 255. Only relevant when building a mesh of clusters.
 # This value is not defined by default
 # cilium_cluster_id:
@@ -80,7 +75,7 @@ cilium_l2announcements: false
 # cilium_deploy_additionally: false
 
 # Auto direct nodes routes can be used to advertise pods routes in your cluster
-# without any tunneling (with `cilium_tunnel_mode` sets to `disabled`).
+# without any tunelling (with `cilium_tunnel_mode` sets to `disabled`).
 # This works only if you have a L2 connectivity between all your nodes.
 # You wil also have to specify the variable `cilium_native_routing_cidr` to
 # make this work. Please refer to the cilium documentation for more
@@ -143,16 +138,9 @@ cilium_l2announcements: false
 ### A time interval at which the agent attempts to reload config from disk
 # cilium_ip_masq_resync_interval: 60s
 
-### Host Firewall and Policy Audit Mode
-# cilium_enable_host_firewall: false
-# cilium_policy_audit_mode: false
-
 # Hubble
 ### Enable Hubble without install
 # cilium_enable_hubble: false
-### Enable Hubble-ui
-### Installed by default when hubble is enabled. To disable set to false
-# cilium_enable_hubble_ui: "{{ cilium_enable_hubble }}"
 ### Enable Hubble Metrics
 # cilium_enable_hubble_metrics: false
 ### if cilium_enable_hubble_metrics: true
@@ -167,17 +155,6 @@ cilium_l2announcements: false
 # cilium_hubble_install: false
 ### Enable auto generate certs if cilium_hubble_install: true
 # cilium_hubble_tls_generate: false
-
-### Tune cilium_hubble_event_buffer_capacity & cilium_hubble_event_queue_size values to avoid dropping events when hubble is under heavy load
-### Capacity of Hubble events buffer. The provided value must be one less than an integer power of two and no larger than 65535
-### (ie: 1, 3, ..., 2047, 4095, ..., 65535) (default 4095)
-# cilium_hubble_event_buffer_capacity: 4095
-### Buffer size of the channel to receive monitor events.
-# cilium_hubble_event_queue_size: 50
-
-# Override the DNS suffix that Hubble-Relay uses to resolve its peer service.
-# It defaults to the inventory's `dns_domain`.
-# cilium_hubble_peer_service_cluster_domain: "{{ dns_domain }}"
 
 # IP address management mode for v1.9+.
 # https://docs.cilium.io/en/v1.9/concepts/networking/ipam/
@@ -248,105 +225,6 @@ cilium_l2announcements: false
 
 # -- Enable native IP masquerade support in eBPF
 # cilium_enable_bpf_masquerade: false
-
-# -- Enable BGP Control Plane
-# cilium_enable_bgp_control_plane: false
-
-# -- Configure Loadbalancer IP Pools
-# cilium_loadbalancer_ip_pools:
-#   - name: "blue-pool"
-#     cidrs:
-#       - "10.0.10.0/24"
-#     ranges:
-#       - start: "20.0.20.100"
-#         stop: "20.0.20.200"
-#       - start: "1.2.3.4"
-
-# -- Configure BGP Instances (New bgpv2 API v1.16+)
-# cilium_bgp_cluster_configs:
-#   - name: "cilium-bgp"
-#     spec:
-#       bgpInstances:
-#       - name: "instance-64512"
-#         localASN: 64512
-#         peers:
-#         - name: "peer-64512-tor1"
-#           peerASN: 64512
-#           peerAddress: '10.47.1.1'
-#           peerConfigRef:
-#             name: "cilium-peer"
-#       nodeSelector:
-#         matchExpressions:
-#           - {key: somekey, operator: NotIn, values: ['never-used-value']}
-
-# -- Configure BGP Peers (New bgpv2 API v1.16+)
-# cilium_bgp_peer_configs:
-#   - name: cilium-peer
-#     spec:
-#       # authSecretRef: bgp-auth-secret
-#       gracefulRestart:
-#         enabled: true
-#         restartTimeSeconds: 15
-#       families:
-#         - afi: ipv4
-#           safi: unicast
-#           advertisements:
-#             matchLabels:
-#               advertise: "bgp"
-#         - afi: ipv6
-#           safi: unicast
-#           advertisements:
-#             matchLabels:
-#               advertise: "bgp"
-
-# -- Configure BGP Advertisements (New bgpv2 API v1.16+)
-# cilium_bgp_advertisements:
-#   - name: bgp-advertisements
-#     labels:
-#       advertise: bgp
-#     spec:
-#       advertisements:
-#         # - advertisementType: "PodCIDR"
-#         #   attributes:
-#         #     communities:
-#         #       standard: [ "64512:99" ]
-#         - advertisementType: "Service"
-#           service:
-#             addresses:
-#               - ClusterIP
-#               - ExternalIP
-#               - LoadBalancerIP
-#           selector:
-#             matchExpressions:
-#                 - {key: somekey, operator: NotIn, values: ['never-used-value']}
-
-# -- Configure BGP Node Config Overrides (New bgpv2 API v1.16+)
-# cilium_bgp_node_config_overrides:
-#   - name: bgp-node-config-override
-#     spec:
-#     bgpInstances:
-#       - name: "instance-65000"
-#         routerID: "192.168.10.1"
-#         localPort: 1790
-#         peers:
-#           - name: "peer-65000-tor1"
-#             localAddress: fd00:10:0:2::2
-#           - name: "peer-65000-tor2"
-#             localAddress: fd00:11:0:2::2
-
-# -- Configure BGP Peers (Legacy v1.16+)
-# cilium_bgp_peering_policies:
-#   - name: "01-bgp-peering-policy"
-#     spec:
-#       virtualRouters:
-#         - localASN: 64512
-#           exportPodCIDR: false
-#           neighbors:
-#           - peerAddress: '10.47.1.1/24'
-#             peerASN: 64512
-#           serviceSelector:
-#               matchExpressions:
-#               - {key: somekey, operator: NotIn, values: ['never-used-value']}
 
 # -- Configure whether direct routing mode should route traffic via
 # host stack (true) or directly and more efficiently out of BPF (false) if

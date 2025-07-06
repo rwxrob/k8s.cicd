@@ -16,6 +16,9 @@ kube_token_dir: "{{ kube_config_dir }}/tokens"
 
 kube_api_anonymous_auth: true
 
+## Change this to use another Kubernetes version, e.g. a current beta release
+kube_version: v1.28.10
+
 # Where the binaries will be downloaded.
 # Note: ensure that you've enough disk space (about 1G)
 local_release_dir: "/tmp/releases"
@@ -57,12 +60,12 @@ credentials_dir: "{{ inventory_dir }}/credentials"
 # kube_webhook_token_auth_url: https://...
 # kube_webhook_token_auth_url_skip_tls_verify: false
 
-## For webhook authorization, authorization_modes must include Webhook or kube_apiserver_authorization_config_authorizers must configure a type: Webhook
+## For webhook authorization, authorization_modes must include Webhook
 # kube_webhook_authorization: false
 # kube_webhook_authorization_url: https://...
 # kube_webhook_authorization_url_skip_tls_verify: false
 
-# Choose network plugin (cilium, calico, kube-ovn or flannel. Use cni for generic cni plugin)
+# Choose network plugin (cilium, calico, kube-ovn, weave or flannel. Use cni for generic cni plugin)
 # Can also be set to 'cloud', which lets the cloud provider setup appropriate routing
 kube_network_plugin: calico
 
@@ -94,29 +97,31 @@ kube_pods_subnet: 10.233.64.0/18
 #  - kubelet_max_pods: 110
 kube_network_node_prefix: 24
 
+# Configure Dual Stack networking (i.e. both IPv4 and IPv6)
+enable_dual_stack_networks: false
+
 # Kubernetes internal network for IPv6 services, unused block of space.
-# This is only used if ipv6_stack is set to true
+# This is only used if enable_dual_stack_networks is set to true
 # This provides 4096 IPv6 IPs
 kube_service_addresses_ipv6: fd85:ee78:d8a6:8607::1000/116
 
 # Internal network. When used, it will assign IPv6 addresses from this range to individual pods.
 # This network must not already be in your network infrastructure!
-# This is only used if ipv6_stack is set to true.
+# This is only used if enable_dual_stack_networks is set to true.
 # This provides room for 256 nodes with 254 pods per node.
 kube_pods_subnet_ipv6: fd85:ee78:d8a6:8607::1:0000/112
 
 # IPv6 subnet size allocated to each for pods.
-# This is only used if ipv6_stack is set to true
+# This is only used if enable_dual_stack_networks is set to true
 # This provides room for 254 pods per node.
 kube_network_node_prefix_ipv6: 120
 
 # The port the API Server will be listening on.
-kube_apiserver_ip: "{{ kube_service_subnets.split(',') | first | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(1) | ansible.utils.ipaddr('address') }}"
+kube_apiserver_ip: "{{ kube_service_addresses | ipaddr('net') | ipaddr(1) | ipaddr('address') }}"
 kube_apiserver_port: 6443  # (https)
 
 # Kube-proxy proxyMode configuration.
-# Can be ipvs, iptables, nftables
-# TODO: it needs to be changed to nftables when the upstream use nftables as default
+# Can be ipvs, iptables
 kube_proxy_mode: ipvs
 
 # configure arp_ignore and arp_announce to avoid answering ARP queries from kube-ipvs0 interface
@@ -135,7 +140,11 @@ kube_proxy_nodeport_addresses: >-
   {%- endif -%}
 
 # If non-empty, will use this string as identification instead of the actual hostname
-# kube_override_hostname: {{ inventory_hostname }}
+# kube_override_hostname: >-
+#   {%- if cloud_provider is defined and cloud_provider in ['aws'] -%}
+#   {%- else -%}
+#   {{ inventory_hostname }}
+#   {%- endif -%}
 
 ## Encrypting Secret Data at Rest
 kube_encrypt_secret_data: false
@@ -210,8 +219,8 @@ resolvconf_mode: host_resolvconf
 # Deploy netchecker app to verify DNS resolve as an HTTP service
 deploy_netchecker: false
 # Ip address of the kubernetes skydns service
-skydns_server: "{{ kube_service_subnets.split(',') | first | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(3) | ansible.utils.ipaddr('address') }}"
-skydns_server_secondary: "{{ kube_service_subnets.split(',') | first | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(4) | ansible.utils.ipaddr('address') }}"
+skydns_server: "{{ kube_service_addresses | ipaddr('net') | ipaddr(3) | ipaddr('address') }}"
+skydns_server_secondary: "{{ kube_service_addresses | ipaddr('net') | ipaddr(4) | ipaddr('address') }}"
 dns_domain: "{{ cluster_name }}"
 
 ## Container runtime
@@ -253,7 +262,7 @@ default_kubelet_config_dir: "{{ kube_config_dir }}/dynamic_kubelet_dir"
 # kubelet_runtime_cgroups_cgroupfs: "/system.slice/{{ container_manager }}.service"
 # kubelet_kubelet_cgroups_cgroupfs: "/system.slice/kubelet.service"
 
-# Whether to run kubelet and container-engine daemons in a dedicated cgroup.
+# Optionally reserve this space for kube daemons.
 # kube_reserved: false
 ## Uncomment to override default values
 ## The following two items need to be set when kube_reserved is true
@@ -263,6 +272,11 @@ default_kubelet_config_dir: "{{ kube_config_dir }}/dynamic_kubelet_dir"
 # kube_cpu_reserved: 100m
 # kube_ephemeral_storage_reserved: 2Gi
 # kube_pid_reserved: "1000"
+# Reservation for master hosts
+# kube_master_memory_reserved: 512Mi
+# kube_master_cpu_reserved: 200m
+# kube_master_ephemeral_storage_reserved: 2Gi
+# kube_master_pid_reserved: "1000"
 
 ## Optionally reserve resources for OS system daemons.
 # system_reserved: true
@@ -273,6 +287,10 @@ default_kubelet_config_dir: "{{ kube_config_dir }}/dynamic_kubelet_dir"
 # system_memory_reserved: 512Mi
 # system_cpu_reserved: 500m
 # system_ephemeral_storage_reserved: 2Gi
+## Reservation for master hosts
+# system_master_memory_reserved: 256Mi
+# system_master_cpu_reserved: 250m
+# system_master_ephemeral_storage_reserved: 2Gi
 
 ## Eviction Thresholds to avoid system OOMs
 # https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#eviction-thresholds
@@ -322,7 +340,7 @@ persistent_volumes_enabled: false
 #   - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 #   - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
 #   - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-#   - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+#   - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
 #   - TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
 #   - TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
 #   - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
@@ -330,7 +348,7 @@ persistent_volumes_enabled: false
 #   - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 #   - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
 #   - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-#   - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+#   - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
 #   - TLS_ECDHE_RSA_WITH_RC4_128_SHA
 #   - TLS_RSA_WITH_3DES_EDE_CBC_SHA
 #   - TLS_RSA_WITH_AES_128_CBC_SHA
@@ -346,27 +364,10 @@ event_ttl_duration: "1h0m0s"
 ## Automatically renew K8S control plane certificates on first Monday of each month
 auto_renew_certificates: false
 # First Monday of each month
-# auto_renew_certificates_systemd_calendar: "Mon *-*-1,2,3,4,5,6,7 03:00:00"
+# auto_renew_certificates_systemd_calendar: "Mon *-*-1,2,3,4,5,6,7 03:{{ groups['kube_control_plane'].index(inventory_hostname) }}0:00"
 
-kubeadm_patches_dir: "{{ kube_config_dir }}/patches"
-kubeadm_patches: []
-# See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
-# Correspondance with this link
-# patchtype = type
-# target = target
-# suffix -> managed automatically
-# extension -> always "yaml"
-# kubeadm_patches:
-# - target: kube-apiserver|kube-controller-manager|kube-scheduler|etcd|kubeletconfiguration
-#   type: strategic(default)|json|merge
-#   patch:
-#    metadata:
-#      annotations:
-#        example.com/test: "true"
-#      labels:
-#        example.com/prod_level: "{{ prod_level }}"
-# - ...
-# Patches are applied in the order they are specified.
-
-# Set to true to remove the role binding to anonymous users created by kubeadm
-remove_anonymous_access: false
+# kubeadm patches path
+kubeadm_patches:
+  enabled: false
+  source_dir: "{{ inventory_dir }}/patches"
+  dest_dir: "{{ kube_config_dir }}/patches"

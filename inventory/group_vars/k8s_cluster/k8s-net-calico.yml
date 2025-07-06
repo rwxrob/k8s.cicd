@@ -11,7 +11,6 @@ calico_cni_name: k8s-pod-network
 
 # Enables Internet connectivity from containers
 # nat_outgoing: true
-# nat_outgoing_ipv6: true
 
 # Enables Calico CNI "host-local" IPAM plugin
 # calico_ipam_host_local: true
@@ -19,14 +18,20 @@ calico_cni_name: k8s-pod-network
 # add default ippool name
 # calico_pool_name: "default-pool"
 
-# add default ippool blockSize
+# add default ippool blockSize (defaults kube_network_node_prefix)
 calico_pool_blocksize: 26
 
 # add default ippool CIDR (must be inside kube_pods_subnet, defaults to kube_pods_subnet otherwise)
 # calico_pool_cidr: 1.2.3.4/5
 
+# add default ippool CIDR to CNI config
+# calico_cni_pool: true
+
 # Add default IPV6 IPPool CIDR. Must be inside kube_pods_subnet_ipv6. Defaults to kube_pods_subnet_ipv6 if not set.
 # calico_pool_cidr_ipv6: fd85:ee78:d8a6:8607::1:0000/112
+
+# Add default IPV6 IPPool CIDR to CNI config
+# calico_cni_pool_ipv6: true
 
 # Global as_num (/calico/bgp/v1/global/as_num)
 # global_as_num: "64512"
@@ -83,7 +88,7 @@ calico_pool_blocksize: 26
 # bird enable BGP routing, required for ipip and no encapsulation modes
 # calico_network_backend: vxlan
 
-# IP in IP and VXLAN is mutually exclusive modes.
+# IP in IP and VXLAN is mutualy exclusive modes.
 # set IP in IP encapsulation mode: "Always", "CrossSubnet", "Never"
 # calico_ipip_mode: 'Never'
 

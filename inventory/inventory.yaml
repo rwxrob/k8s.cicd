@@ -1,0 +1,19 @@
+---
+all:
+  children:
+    kube_control_plane:
+      hosts:
+        heisenberg
+    kube_node:
+      children:
+        kube_control_plane:
+    etcd:
+      children:
+        kube_control_plane:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+        calico_rr:
+    calico_rr:
+
