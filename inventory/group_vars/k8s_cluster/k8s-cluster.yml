@@ -296,16 +296,16 @@ persistent_volumes_enabled: false
 
 ## Container Engine Acceleration
 ## Enable container acceleration feature, for example use gpu acceleration in containers
-nvidia_accelerator_enabled: true
+# nvidia_accelerator_enabled: true
 ## Nvidia GPU driver install. Install will by done by a (init) pod running as a daemonset.
 ## Important: if you use Ubuntu then you should set in all.yml 'docker_storage_options: -s overlay2'
 ## Array with nvida_gpu_nodes, leave empty or comment if you don't want to install drivers.
 ## Labels and taints won't be set to nodes if they are not in the array.
-nvidia_gpu_nodes:
-   - node1
-nvidia_driver_version: "384.111"
+# nvidia_gpu_nodes:
+#   - kube-gpu-001
+# nvidia_driver_version: "384.111"
 ## flavor can be tesla or gtx
-##nvidia_gpu_flavor: gtx
+# nvidia_gpu_flavor: gtx
 ## NVIDIA driver installer images. Change them if you have trouble accessing gcr.io.
 # nvidia_driver_install_centos_container: atzedevries/nvidia-centos-driver-installer:2
 # nvidia_driver_install_ubuntu_container: gcr.io/google-containers/ubuntu-nvidia-driver-installer@sha256:7df76a0f0a17294e86f691c81de6bbb7c04a1b4b3d4ea4e7e2cccdc42e1f6d63

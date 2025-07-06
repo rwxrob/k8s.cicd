@@ -2,4 +2,4 @@
 set -e
 image=ghcr.io/rwxrob/k8s.cicd/kubespray:v0.0.2
 podman build -t "$image" --format docker .
-podman push "$image"
+#podman push "$image"

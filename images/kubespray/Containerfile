@@ -1,10 +1,14 @@
-FROM quay.io/kubespray/kubespray:v2.28.0
+FROM quay.io/kubespray/kubespray:v2.24.1
 
 LABEL org.opencontainers.image.source https://github.com/rwxrob/k8s.cicd
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update -q && \
   apt-get install -yq --no-install-recommends \
-  dnsutils
+  dnsutils git git-man less libcurl3-gnutls liberror-perl \
+  libgdbm-compat4 libgdbm6 libperl5.34 netbase netcat patch \
+  perl-modules-5.34 wget \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /var/log/*
 
-# TODO: gradually add that stuff necessary to pull down the k8sapps
+RUN wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
+  -O /usr/bin/yq && chmod +x /usr/bin/yq
