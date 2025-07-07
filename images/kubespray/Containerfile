@@ -1,4 +1,4 @@
-FROM quay.io/kubespray/kubespray:v2.26.0
+FROM quay.io/kubespray/kubespray:v2.27.0
 
 LABEL org.opencontainers.image.source https://github.com/rwxrob/k8s.cicd
 
